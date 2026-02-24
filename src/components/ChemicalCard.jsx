@@ -9,6 +9,7 @@ export default function ChemicalCard({ chemical }) {
   const oc = scoreColor(overall);
   const ghsPictograms = getGHSPictograms(hPhrases);
   const [hPhrasesExpanded, setHPhrasesExpanded] = useState(false);
+  const [activeTooltip, setActiveTooltip] = useState(null);
 
   return (
     <div className="mt-6 animate-fadeIn">
@@ -57,11 +58,12 @@ export default function ChemicalCard({ chemical }) {
               return (
                 <span
                   key={h}
-                  className="px-2 py-0.5 bg-navy-700 border border-navy-600 rounded text-xs font-mono relative group cursor-default"
+                  className="px-2 py-0.5 bg-navy-700 border border-navy-600 rounded text-xs font-mono relative group cursor-pointer"
+                  onClick={() => setActiveTooltip(activeTooltip === h ? null : h)}
                 >
                   {h}
                   {desc && (
-                    <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-navy-900 border border-navy-500 rounded text-xs text-navy-100 whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10 font-sans">
+                    <span className={`absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-navy-900 border border-navy-500 rounded text-xs text-navy-100 whitespace-nowrap transition-opacity z-10 font-sans ${activeTooltip === h ? 'opacity-100' : 'opacity-0 group-hover:opacity-100 pointer-events-none'}`}>
                       {desc}
                     </span>
                   )}

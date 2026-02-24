@@ -1,9 +1,14 @@
+import { useState } from "react";
 import { CATEGORIES, scoreColor, scoreHex } from "../data/scoring";
+import { getGHSPictograms, getHPhraseDescription } from "../data/ghsData";
+import GHSPictogramRow from "./GHSPictograms";
 import RadarChart from "./RadarChart";
 
 export default function ChemicalCard({ chemical }) {
   const { name, cas, formula, hPhrases, scores, overall, physicalState, boilingPoint, flashPoint, molecularWeight } = chemical;
   const oc = scoreColor(overall);
+  const ghsPictograms = getGHSPictograms(hPhrases);
+  const [hPhrasesExpanded, setHPhrasesExpanded] = useState(false);
 
   return (
     <div className="mt-6 animate-fadeIn">
@@ -29,16 +34,54 @@ export default function ChemicalCard({ chemical }) {
           </div>
         </div>
 
-        {/* H-phrases */}
-        <div className="mt-4">
-          <div className="text-xs text-navy-400 mb-1.5 uppercase tracking-wider font-medium">H-Phrases</div>
-          <div className="flex flex-wrap gap-1.5">
-            {hPhrases.map((h) => (
-              <span key={h} className="px-2 py-0.5 bg-navy-700 border border-navy-600 rounded text-xs font-mono">
-                {h}
-              </span>
-            ))}
+        {/* GHS Pictograms */}
+        {ghsPictograms.length > 0 && (
+          <div className="mt-4">
+            <div className="text-xs text-navy-400 mb-1.5 uppercase tracking-wider font-medium">GHS Pictograms</div>
+            <GHSPictogramRow pictogramIds={ghsPictograms} />
           </div>
+        )}
+
+        {/* H-phrases with descriptions */}
+        <div className="mt-4">
+          <button
+            onClick={() => setHPhrasesExpanded(!hPhrasesExpanded)}
+            className="flex items-center gap-1.5 text-xs text-navy-400 mb-1.5 uppercase tracking-wider font-medium hover:text-navy-200 transition-colors cursor-pointer"
+          >
+            <span className={`transition-transform inline-block ${hPhrasesExpanded ? 'rotate-90' : ''}`}>▶</span>
+            H-Phrases ({hPhrases.length})
+          </button>
+          <div className="flex flex-wrap gap-1.5">
+            {hPhrases.map((h) => {
+              const desc = getHPhraseDescription(h);
+              return (
+                <span
+                  key={h}
+                  className="px-2 py-0.5 bg-navy-700 border border-navy-600 rounded text-xs font-mono relative group cursor-default"
+                >
+                  {h}
+                  {desc && (
+                    <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-navy-900 border border-navy-500 rounded text-xs text-navy-100 whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10 font-sans">
+                      {desc}
+                    </span>
+                  )}
+                </span>
+              );
+            })}
+          </div>
+          {hPhrasesExpanded && (
+            <div className="mt-2 space-y-1 bg-navy-900/50 rounded-lg p-3 border border-navy-700">
+              {hPhrases.map((h) => {
+                const desc = getHPhraseDescription(h);
+                return (
+                  <div key={h} className="flex gap-2 text-xs">
+                    <span className="font-mono text-navy-300 shrink-0 w-14">{h}</span>
+                    <span className="text-navy-200">{desc || "—"}</span>
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </div>
       </div>
 

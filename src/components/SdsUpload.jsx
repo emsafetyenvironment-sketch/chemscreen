@@ -62,7 +62,7 @@ async function exportSdsPDF(result, containerRef) {
   try {
     const catEl = containerRef.current?.querySelector(".category-scores-section");
     if (catEl) {
-      const catCanvas = await html2canvas(catEl, { backgroundColor: "#1e293b", scale: 2 });
+      const catCanvas = await html2canvas(catEl, { backgroundColor: "#ffffff", scale: 2 });
       const catImg = catCanvas.toDataURL("image/png");
       const catW = Math.min(w - margin * 2, 160);
       const catH = (catCanvas.height / catCanvas.width) * catW;
@@ -156,23 +156,13 @@ async function exportSdsPDF(result, containerRef) {
     try {
       const ghsEl = containerRef.current?.querySelector(".ghs-pictogram-row");
       if (ghsEl) {
-        const ghsCanvas = await html2canvas(ghsEl, { backgroundColor: "#1e293b", scale: 2 });
+        const ghsCanvas = await html2canvas(ghsEl, { backgroundColor: "#ffffff", scale: 2 });
         const ghsImg = ghsCanvas.toDataURL("image/png");
         const ghsW = Math.min(w - margin * 2, 140);
         const ghsH = (ghsCanvas.height / ghsCanvas.width) * ghsW;
         if (y + ghsH > 270) { pdf.addPage(); y = 15; }
         pdf.addImage(ghsImg, "PNG", margin, y, ghsW, ghsH);
-        y += ghsH + 2;
-        // GHS code labels under pictograms
-        pdf.setFontSize(8);
-        pdf.setFont(undefined, "normal");
-        pdf.setTextColor(0);
-        const picSpacing = ghsW / ghsIds.length;
-        ghsIds.forEach((id, i) => {
-          const labelW = pdf.getTextWidth(id);
-          pdf.text(id, margin + i * picSpacing + (picSpacing - labelW) / 2, y + 3);
-        });
-        y += 8;
+        y += ghsH + 4;
       }
     } catch (e) {
       pdf.setFontSize(9);

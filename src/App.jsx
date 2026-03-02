@@ -5,6 +5,7 @@ import SearchBar from "./components/SearchBar";
 import ChemicalCard from "./components/ChemicalCard";
 import ChemicalBank from "./components/ChemicalBank";
 import CompareView from "./components/CompareView";
+import SdsUpload from "./components/SdsUpload";
 
 function lookupChemical(query) {
   const q = query.trim().toLowerCase();
@@ -30,6 +31,7 @@ export default function App() {
   const [compareList, setCompareList] = useState([]);
   const [error, setError] = useState("");
   const [mobileMenu, setMobileMenu] = useState(false);
+  const [activeTab, setActiveTab] = useState("search"); // "search" | "sds"
 
   useEffect(() => { saveBank(bank); }, [bank]);
 
@@ -83,6 +85,20 @@ export default function App() {
               <p className="text-[11px] text-navy-300 leading-tight">SSbD Chemical Screening Tool</p>
             </div>
           </div>
+          <div className="hidden md:flex items-center gap-1">
+            <button
+              onClick={() => setActiveTab("search")}
+              className={`px-3 py-1.5 text-sm rounded-lg transition-colors ${activeTab === "search" ? "bg-cyan-600 text-white" : "text-navy-300 hover:text-white hover:bg-navy-700"}`}
+            >
+              🔬 Search
+            </button>
+            <button
+              onClick={() => setActiveTab("sds")}
+              className={`px-3 py-1.5 text-sm rounded-lg transition-colors ${activeTab === "sds" ? "bg-cyan-600 text-white" : "text-navy-300 hover:text-white hover:bg-navy-700"}`}
+            >
+              📄 Upload SDS
+            </button>
+          </div>
           <button
             className="md:hidden p-2 text-navy-300 hover:text-white"
             onClick={() => setMobileMenu(!mobileMenu)}
@@ -112,6 +128,34 @@ export default function App() {
         {/* Main */}
         <main className="flex-1 p-4 md:p-6 lg:p-8 min-h-[calc(100vh-56px)]">
           <div className="max-w-3xl mx-auto">
+            {/* Mobile tabs */}
+            <div className="flex md:hidden gap-2 mb-4">
+              <button
+                onClick={() => setActiveTab("search")}
+                className={`flex-1 py-2 text-sm rounded-lg transition-colors ${activeTab === "search" ? "bg-cyan-600 text-white" : "bg-navy-800 text-navy-300 border border-navy-600"}`}
+              >
+                🔬 Search
+              </button>
+              <button
+                onClick={() => setActiveTab("sds")}
+                className={`flex-1 py-2 text-sm rounded-lg transition-colors ${activeTab === "sds" ? "bg-cyan-600 text-white" : "bg-navy-800 text-navy-300 border border-navy-600"}`}
+              >
+                📄 Upload SDS
+              </button>
+            </div>
+
+            {activeTab === "sds" ? (
+              <SdsUpload
+                bank={bank}
+                onAddToBank={(chem) => {
+                  setBank((prev) => {
+                    if (prev.some((b) => b.cas === chem.cas)) return prev;
+                    return [chem, ...prev];
+                  });
+                }}
+              />
+            ) : (
+            <>
             <SearchBar onSearch={handleSearch} />
             {error && (
               <div className="mt-4 p-3 bg-red-900/40 border border-red-700 rounded-lg text-red-200 text-sm">
@@ -143,6 +187,9 @@ export default function App() {
                   ))}
                 </div>
               </div>
+            )}
+
+            </>
             )}
 
             {/* Disclaimer */}

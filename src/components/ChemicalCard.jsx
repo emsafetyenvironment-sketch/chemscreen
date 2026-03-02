@@ -25,6 +25,13 @@ async function exportPDF(chemical, cardRef) {
   pdf.setFontSize(20);
   pdf.setFont(undefined, "bold");
   pdf.text(chemical.name, margin, y);
+  if (chemical.fromSds || chemical.fromSDS || (chemical.concentrations && chemical.concentrations.length > 0)) {
+    const nameW = pdf.getTextWidth(chemical.name);
+    pdf.setFontSize(8);
+    pdf.setTextColor(128, 0, 255);
+    pdf.text("[FROM SDS]", margin + nameW + 4, y);
+    pdf.setTextColor(0);
+  }
   y += 8;
 
   pdf.setFontSize(10);
@@ -33,7 +40,12 @@ async function exportPDF(chemical, cardRef) {
   pdf.text(`CAS: ${chemical.cas}  |  Formula: ${fixSubscripts(chemical.formula)}  |  MW: ${chemical.molecularWeight}`, margin, y);
   y += 5;
   pdf.text(`State: ${chemical.physicalState}  |  BP: ${chemical.boilingPoint}  |  Flash: ${chemical.flashPoint}`, margin, y);
-  y += 8;
+  y += 5;
+  if (chemical.manufacturer) {
+    pdf.text(`Manufacturer: ${chemical.manufacturer}`, margin, y);
+    y += 5;
+  }
+  y += 3;
 
   // Overall score
   pdf.setTextColor(0);
@@ -87,6 +99,45 @@ async function exportPDF(chemical, cardRef) {
     });
   });
   y += 4;
+
+  // Mixture components table
+  if (chemical.concentrations && chemical.concentrations.length > 0) {
+    if (y > 220) { pdf.addPage(); y = 15; }
+    pdf.setFontSize(11);
+    pdf.setFont(undefined, "bold");
+    pdf.setTextColor(0);
+    pdf.text("Mixture Components", margin, y);
+    y += 6;
+
+    pdf.setFontSize(8);
+    pdf.setFont(undefined, "bold");
+    pdf.setTextColor(100);
+    const colX = [margin, margin + 55, margin + 85, margin + 110];
+    pdf.text("Component", colX[0], y);
+    pdf.text("CAS", colX[1], y);
+    pdf.text("Conc.", colX[2], y);
+    pdf.text("H-Phrases", colX[3], y);
+    y += 1;
+    pdf.setDrawColor(180);
+    pdf.line(margin, y, w - margin, y);
+    y += 3;
+
+    pdf.setFont(undefined, "normal");
+    pdf.setTextColor(0);
+    chemical.concentrations.forEach((c) => {
+      if (y > 270) { pdf.addPage(); y = 15; }
+      const nameLines = pdf.splitTextToSize(c.name || "", 50);
+      const hStr = (c.hPhrases || []).join(", ");
+      const hLines = pdf.splitTextToSize(hStr, w - margin - colX[3]);
+      const rowLines = Math.max(nameLines.length, hLines.length, 1);
+      nameLines.forEach((l, i) => pdf.text(l, colX[0], y + i * 4));
+      pdf.text(c.cas || "", colX[1], y);
+      pdf.text(c.concentration || "", colX[2], y);
+      hLines.forEach((l, i) => pdf.text(l, colX[3], y + i * 4));
+      y += rowLines * 4 + 2;
+    });
+    y += 4;
+  }
 
   // GHS pictograms as text with descriptions
   const ghsIds = getGHSPictograms(chemical.hPhrases);
@@ -160,7 +211,12 @@ export default function ChemicalCard({ chemical }) {
       <div className="bg-navy-800 border border-navy-600 rounded-2xl p-6">
         <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
           <div>
-            <h2 className="text-2xl font-bold">{name}</h2>
+            <div className="flex items-center gap-2">
+              <h2 className="text-2xl font-bold">{name}</h2>
+              {(chemical.fromSds || chemical.fromSDS || (chemical.concentrations && chemical.concentrations.length > 0)) && (
+                <span className="px-2 py-0.5 text-[10px] bg-purple-700/50 border border-purple-500 rounded-full uppercase tracking-wider">From SDS</span>
+              )}
+            </div>
             <div className="flex flex-wrap gap-3 mt-1 text-sm text-navy-300">
               <span>CAS: <span className="text-cyan-400 font-mono font-semibold">{cas}</span></span>
               <span>Formula: <span className="text-navy-100">{formula}</span></span>
@@ -171,6 +227,9 @@ export default function ChemicalCard({ chemical }) {
               <span>BP: {boilingPoint}</span>
               {flashPoint !== "N/A" && <span>Flash: {flashPoint}</span>}
             </div>
+            {chemical.manufacturer && (
+              <div className="mt-1 text-xs text-navy-400">Manufacturer: <span className="text-navy-200">{chemical.manufacturer}</span></div>
+            )}
           </div>
           <div className="flex items-start gap-3 shrink-0">
             <button
@@ -241,6 +300,41 @@ export default function ChemicalCard({ chemical }) {
             </div>
           )}
         </div>
+
+        {/* Mixture components */}
+        {chemical.concentrations && chemical.concentrations.length > 0 && (
+          <div className="mt-4">
+            <div className="text-xs text-navy-400 mb-1.5 uppercase tracking-wider font-medium">Mixture Components</div>
+            <div className="bg-navy-900/50 rounded-lg border border-navy-700 overflow-hidden">
+              <table className="w-full text-xs">
+                <thead>
+                  <tr className="text-navy-400 border-b border-navy-700">
+                    <th className="text-left p-2 font-medium">Component</th>
+                    <th className="text-left p-2 font-medium">CAS</th>
+                    <th className="text-left p-2 font-medium">Conc.</th>
+                    <th className="text-left p-2 font-medium">H-Phrases</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {chemical.concentrations.map((c, i) => (
+                    <tr key={i} className="border-b border-navy-800 last:border-0">
+                      <td className="p-2 text-navy-200">{c.name}</td>
+                      <td className="p-2 font-mono text-cyan-400">{c.cas}</td>
+                      <td className="p-2 text-navy-200">{c.concentration}</td>
+                      <td className="p-2">
+                        <div className="flex flex-wrap gap-1">
+                          {(c.hPhrases || []).map((h) => (
+                            <span key={h} className="px-1.5 py-0.5 bg-navy-700 rounded text-[10px] font-mono">{h}</span>
+                          ))}
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Scores grid + radar */}

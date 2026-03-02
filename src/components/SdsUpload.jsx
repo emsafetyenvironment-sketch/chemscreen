@@ -252,7 +252,7 @@ export default function SdsUpload({ bank, onAddToBank }) {
         boilingPoint: data.boilingPoint || "N/A",
         flashPoint: data.flashPoint || "N/A",
         formula: data.formula || "",
-        fromSDS: true,
+        fromSds: true,
         searchedAt: new Date().toISOString(),
       };
       setResult(enriched);

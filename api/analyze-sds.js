@@ -47,7 +47,7 @@ IMPORTANT RULES:
 - If molecular weight is not found, use 0
 - Return ONLY valid JSON, no markdown, no explanation`;
 
-    const models = ['gemini-2.0-flash', 'gemini-1.5-flash'];
+    const models = ['gemini-2.5-flash-preview-05-20', 'gemini-2.0-flash-001'];
     let lastError = null;
 
     for (const model of models) {

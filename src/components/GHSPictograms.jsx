@@ -132,10 +132,15 @@ export const ghsPictogramComponents = {
 export default function GHSPictogramRow({ pictogramIds }) {
   if (!pictogramIds || pictogramIds.length === 0) return null;
   return (
-    <div className="flex flex-wrap gap-1.5">
+    <div className="flex flex-wrap gap-2">
       {pictogramIds.map((id) => {
         const Component = ghsPictogramComponents[id];
-        return Component ? <Component key={id} /> : null;
+        return Component ? (
+          <div key={id} className="flex flex-col items-center gap-0.5">
+            <Component />
+            <span className="text-[10px] font-mono text-navy-400">{id}</span>
+          </div>
+        ) : null;
       })}
     </div>
   );

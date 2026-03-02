@@ -4,6 +4,166 @@ import { getGHSPictograms, getHPhraseDescription } from "../data/ghsData";
 import GHSPictogramRow from "./GHSPictograms";
 import RadarChart from "./RadarChart";
 
+async function exportSdsPDF(result, containerRef) {
+  const [{ default: jsPDF }, { default: html2canvas }] = await Promise.all([
+    import("jspdf"),
+    import("html2canvas"),
+  ]);
+
+  const pdf = new jsPDF("p", "mm", "a4");
+  const w = pdf.internal.pageSize.getWidth();
+  const margin = 15;
+  let y = 15;
+
+  const pdfIconMap = {
+    acuteTox: "[ACUTE]", chronicCMR: "[CMR]", aquaticTox: "[AQUATIC]",
+    persistence: "[PERSIST]", bioaccumulation: "[BIOACC]",
+    physicalHaz: "[PHYSICAL]", endocrine: "[ENDOCRINE]",
+  };
+
+  // Title + FROM SDS badge
+  pdf.setFontSize(20);
+  pdf.setFont(undefined, "bold");
+  pdf.text(result.name, margin, y);
+  const nameW = pdf.getTextWidth(result.name);
+  pdf.setFontSize(8);
+  pdf.setTextColor(128, 0, 255);
+  pdf.text("[FROM SDS]", margin + nameW + 4, y);
+  pdf.setTextColor(0);
+  y += 8;
+
+  pdf.setFontSize(10);
+  pdf.setFont(undefined, "normal");
+  pdf.setTextColor(100);
+  const meta = [`CAS: ${result.cas || "N/A"}`];
+  if (result.formula) meta.push(`Formula: ${result.formula}`);
+  if (result.molecularWeight) meta.push(`MW: ${result.molecularWeight}`);
+  pdf.text(meta.join("  |  "), margin, y);
+  y += 5;
+  const meta2 = [`State: ${result.physicalState}`];
+  if (result.boilingPoint !== "N/A") meta2.push(`BP: ${result.boilingPoint}`);
+  if (result.flashPoint !== "N/A") meta2.push(`Flash: ${result.flashPoint}`);
+  pdf.text(meta2.join("  |  "), margin, y);
+  y += 5;
+  if (result.manufacturer) {
+    pdf.text(`Manufacturer: ${result.manufacturer}`, margin, y);
+    y += 5;
+  }
+  y += 3;
+
+  // Overall score
+  pdf.setTextColor(0);
+  pdf.setFontSize(14);
+  pdf.setFont(undefined, "bold");
+  pdf.text(`Overall SSbD Score: ${result.overall}/5`, margin, y);
+  y += 10;
+
+  // Category scores
+  pdf.setFontSize(11);
+  pdf.text("Category Scores", margin, y);
+  y += 6;
+  pdf.setFontSize(9);
+  pdf.setFont(undefined, "normal");
+  CATEGORIES.forEach(({ key, label }) => {
+    const s = result.scores[key];
+    pdf.text(`${pdfIconMap[key] || ""} ${label}: ${s}/5`, margin + 2, y);
+    y += 5;
+  });
+  y += 4;
+
+  // H-phrases
+  pdf.setFontSize(11);
+  pdf.setFont(undefined, "bold");
+  pdf.text("H-Phrases", margin, y);
+  y += 6;
+  pdf.setFontSize(9);
+  pdf.setFont(undefined, "normal");
+  (result.hPhrases || []).forEach((h) => {
+    const desc = getHPhraseDescription(h) || "";
+    const line = `${h}: ${desc}`;
+    const lines = pdf.splitTextToSize(line, w - margin * 2);
+    lines.forEach((l) => {
+      if (y > 270) { pdf.addPage(); y = 15; }
+      pdf.text(l, margin + 2, y);
+      y += 4.5;
+    });
+  });
+  y += 4;
+
+  // Mixture components table
+  if (result.concentrations && result.concentrations.length > 0) {
+    if (y > 220) { pdf.addPage(); y = 15; }
+    pdf.setFontSize(11);
+    pdf.setFont(undefined, "bold");
+    pdf.text("Mixture Components", margin, y);
+    y += 6;
+
+    // Table header
+    pdf.setFontSize(8);
+    pdf.setFont(undefined, "bold");
+    pdf.setTextColor(100);
+    const colX = [margin, margin + 55, margin + 85, margin + 110];
+    pdf.text("Component", colX[0], y);
+    pdf.text("CAS", colX[1], y);
+    pdf.text("Conc.", colX[2], y);
+    pdf.text("H-Phrases", colX[3], y);
+    y += 1;
+    pdf.setDrawColor(180);
+    pdf.line(margin, y, w - margin, y);
+    y += 3;
+
+    // Table rows
+    pdf.setFont(undefined, "normal");
+    pdf.setTextColor(0);
+    result.concentrations.forEach((c) => {
+      if (y > 270) { pdf.addPage(); y = 15; }
+      const nameLines = pdf.splitTextToSize(c.name || "", 50);
+      const hStr = (c.hPhrases || []).join(", ");
+      const hLines = pdf.splitTextToSize(hStr, w - margin - colX[3]);
+      const rowLines = Math.max(nameLines.length, hLines.length, 1);
+      nameLines.forEach((l, i) => pdf.text(l, colX[0], y + i * 4));
+      pdf.text(c.cas || "", colX[1], y);
+      pdf.text(c.concentration || "", colX[2], y);
+      hLines.forEach((l, i) => pdf.text(l, colX[3], y + i * 4));
+      y += rowLines * 4 + 2;
+    });
+    y += 4;
+  }
+
+  // GHS pictograms
+  const ghsIds = getGHSPictograms(result.hPhrases);
+  if (ghsIds.length > 0) {
+    if (y > 270) { pdf.addPage(); y = 15; }
+    pdf.setFontSize(11);
+    pdf.setFont(undefined, "bold");
+    pdf.setTextColor(0);
+    pdf.text("GHS Pictograms: " + ghsIds.join(", "), margin, y);
+    y += 8;
+  }
+
+  // Radar chart
+  try {
+    const radarEl = containerRef.current?.querySelector(".radar-chart-container");
+    if (radarEl) {
+      const canvas = await html2canvas(radarEl, { backgroundColor: "#0f172a", scale: 2 });
+      const imgData = canvas.toDataURL("image/png");
+      if (y > 180) { pdf.addPage(); y = 15; }
+      const imgW = 100;
+      const imgH = (canvas.height / canvas.width) * imgW;
+      pdf.addImage(imgData, "PNG", (w - imgW) / 2, y, imgW, imgH);
+      y += imgH + 8;
+    }
+  } catch (e) { /* skip */ }
+
+  // Footer
+  if (y > 270) { pdf.addPage(); y = 15; }
+  pdf.setFontSize(8);
+  pdf.setTextColor(150);
+  pdf.text(`Generated by ChemScreen (SDS Upload) — ${new Date().toLocaleDateString("sv-SE")}`, margin, 285);
+
+  pdf.save(`ChemScreen_SDS_${(result.name || "unknown").replace(/[^a-zA-Z0-9]/g, "_")}.pdf`);
+}
+
 export default function SdsUpload({ bank, onAddToBank }) {
   const [dragging, setDragging] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -13,6 +173,8 @@ export default function SdsUpload({ bank, onAddToBank }) {
   const [hPhrasesExpanded, setHPhrasesExpanded] = useState(false);
   const [compareWith, setCompareWith] = useState(null);
   const fileRef = useRef(null);
+  const containerRef = useRef(null);
+  const [exporting, setExporting] = useState(false);
 
   async function processFile(file) {
     if (!file || file.type !== "application/pdf") {
@@ -153,7 +315,7 @@ export default function SdsUpload({ bank, onAddToBank }) {
 
       {/* Result */}
       {result && (
-        <div className="animate-fadeIn">
+        <div className="animate-fadeIn" ref={containerRef}>
           {/* Action bar */}
           <div className="flex flex-wrap items-center gap-3 mb-4">
             <button
@@ -167,6 +329,16 @@ export default function SdsUpload({ bank, onAddToBank }) {
               className="px-3 py-1.5 text-xs bg-cyan-700 hover:bg-cyan-600 border border-cyan-500 rounded-lg transition-colors"
             >
               + Add to Chemical Bank
+            </button>
+            <button
+              onClick={async () => { setExporting(true); try { await exportSdsPDF(result, containerRef); } catch (e) { console.error("PDF export failed:", e); } setExporting(false); }}
+              disabled={exporting}
+              className="px-3 py-1.5 text-xs bg-navy-700 hover:bg-navy-600 border border-navy-500 rounded-lg transition-colors flex items-center gap-1.5 disabled:opacity-50"
+            >
+              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+              {exporting ? "Exporting..." : "PDF"}
             </button>
             {bank.length > 0 && (
               <select

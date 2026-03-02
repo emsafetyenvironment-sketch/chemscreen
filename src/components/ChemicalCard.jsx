@@ -42,9 +42,14 @@ async function exportPDF(chemical, cardRef) {
   y += 6;
   pdf.setFontSize(9);
   pdf.setFont(undefined, "normal");
-  CATEGORIES.forEach(({ key, label, icon }) => {
+  const pdfIconMap = {
+    acuteTox: "[ACUTE]", chronicCMR: "[CMR]", aquaticTox: "[AQUATIC]",
+    persistence: "[PERSIST]", bioaccumulation: "[BIOACC]",
+    physicalHaz: "[PHYSICAL]", endocrine: "[ENDOCRINE]",
+  };
+  CATEGORIES.forEach(({ key, label }) => {
     const s = chemical.scores[key];
-    pdf.text(`${icon} ${label}: ${s}/5`, margin + 2, y);
+    pdf.text(`${pdfIconMap[key] || ""} ${label}: ${s}/5`, margin + 2, y);
     y += 5;
   });
   y += 4;

@@ -1,29 +1,26 @@
-export const config = { runtime: 'edge' };
+export default async function handler(req, res) {
+  // CORS
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 
-export default async function handler(req) {
   if (req.method === 'OPTIONS') {
-    return new Response(null, {
-      headers: {
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Methods': 'POST, OPTIONS',
-        'Access-Control-Allow-Headers': 'Content-Type',
-      },
-    });
+    return res.status(200).end();
   }
 
   if (req.method !== 'POST') {
-    return new Response(JSON.stringify({ error: 'Method not allowed' }), { status: 405 });
+    return res.status(405).json({ error: 'Method not allowed' });
   }
 
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) {
-    return new Response(JSON.stringify({ error: 'API key not configured' }), { status: 500 });
+    return res.status(500).json({ error: 'API key not configured' });
   }
 
   try {
-    const { pdfBase64 } = await req.json();
+    const { pdfBase64 } = req.body;
     if (!pdfBase64) {
-      return new Response(JSON.stringify({ error: 'No PDF data provided' }), { status: 400 });
+      return res.status(400).json({ error: 'No PDF data provided' });
     }
 
     const prompt = `You are a chemical safety expert. Analyze this Safety Data Sheet (SDS) PDF and extract the following information in JSON format:
@@ -50,8 +47,7 @@ IMPORTANT RULES:
 - If molecular weight is not found, use 0
 - Return ONLY valid JSON, no markdown, no explanation`;
 
-    // Try gemini-2.5-flash first, fall back to 2.0-flash
-    const models = ['gemini-2.5-flash-preview-05-20', 'gemini-2.0-flash'];
+    const models = ['gemini-2.0-flash', 'gemini-1.5-flash'];
     let lastError = null;
 
     for (const model of models) {
@@ -87,30 +83,18 @@ IMPORTANT RULES:
           continue;
         }
 
-        // Extract JSON from response (handle markdown code blocks)
         const jsonMatch = text.match(/```(?:json)?\s*([\s\S]*?)```/) || [null, text];
         const parsed = JSON.parse(jsonMatch[1].trim());
 
-        return new Response(JSON.stringify(parsed), {
-          headers: {
-            'Content-Type': 'application/json',
-            'Access-Control-Allow-Origin': '*',
-          },
-        });
+        return res.status(200).json(parsed);
       } catch (e) {
         lastError = `${model}: ${e.message}`;
         continue;
       }
     }
 
-    return new Response(JSON.stringify({ error: `All models failed. Last error: ${lastError}` }), {
-      status: 502,
-      headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
-    });
+    return res.status(502).json({ error: `All models failed. Last error: ${lastError}` });
   } catch (e) {
-    return new Response(JSON.stringify({ error: e.message }), {
-      status: 500,
-      headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
-    });
+    return res.status(500).json({ error: e.message });
   }
 }

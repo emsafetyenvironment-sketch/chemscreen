@@ -4,6 +4,12 @@ import { getGHSPictograms, getHPhraseDescription } from "../data/ghsData";
 import GHSPictogramRow from "./GHSPictograms";
 import RadarChart from "./RadarChart";
 
+function fixSubscripts(str) {
+  if (!str) return str;
+  const map = { '₀':'0','₁':'1','₂':'2','₃':'3','₄':'4','₅':'5','₆':'6','₇':'7','₈':'8','₉':'9' };
+  return str.replace(/[₀₁₂₃₄₅₆₇₈₉]/g, ch => map[ch] || ch);
+}
+
 async function exportSdsPDF(result, containerRef) {
   const [{ default: jsPDF }, { default: html2canvas }] = await Promise.all([
     import("jspdf"),
@@ -36,7 +42,7 @@ async function exportSdsPDF(result, containerRef) {
   pdf.setFont(undefined, "normal");
   pdf.setTextColor(100);
   const meta = [`CAS: ${result.cas || "N/A"}`];
-  if (result.formula) meta.push(`Formula: ${result.formula}`);
+  if (result.formula) meta.push(`Formula: ${fixSubscripts(result.formula)}`);
   if (result.molecularWeight) meta.push(`MW: ${result.molecularWeight}`);
   pdf.text(meta.join("  |  "), margin, y);
   y += 5;
@@ -130,15 +136,32 @@ async function exportSdsPDF(result, containerRef) {
     y += 4;
   }
 
-  // GHS pictograms
+  // GHS pictograms as images
   const ghsIds = getGHSPictograms(result.hPhrases);
   if (ghsIds.length > 0) {
     if (y > 270) { pdf.addPage(); y = 15; }
     pdf.setFontSize(11);
     pdf.setFont(undefined, "bold");
     pdf.setTextColor(0);
-    pdf.text("GHS Pictograms: " + ghsIds.join(", "), margin, y);
-    y += 8;
+    pdf.text("GHS Pictograms", margin, y);
+    y += 6;
+    try {
+      const ghsEl = containerRef.current?.querySelector(".ghs-pictogram-row");
+      if (ghsEl) {
+        const ghsCanvas = await html2canvas(ghsEl, { backgroundColor: "#1e293b", scale: 2 });
+        const ghsImg = ghsCanvas.toDataURL("image/png");
+        const ghsW = Math.min(w - margin * 2, 140);
+        const ghsH = (ghsCanvas.height / ghsCanvas.width) * ghsW;
+        if (y + ghsH > 270) { pdf.addPage(); y = 15; }
+        pdf.addImage(ghsImg, "PNG", margin, y, ghsW, ghsH);
+        y += ghsH + 4;
+      }
+    } catch (e) {
+      pdf.setFontSize(9);
+      pdf.setFont(undefined, "normal");
+      pdf.text(ghsIds.join(", "), margin + 2, y);
+      y += 6;
+    }
   }
 
   // Radar chart

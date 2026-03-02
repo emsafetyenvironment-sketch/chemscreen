@@ -144,8 +144,13 @@ async function exportSdsPDF(result, containerRef) {
     y += 4;
   }
 
-  // GHS pictograms as images
+  // GHS pictograms as text with descriptions
   const ghsIds = getGHSPictograms(result.hPhrases);
+  const ghsNames = {
+    GHS01: "Exploding bomb", GHS02: "Flame", GHS03: "Oxidizer",
+    GHS04: "Gas cylinder", GHS05: "Corrosion", GHS06: "Skull and crossbones",
+    GHS07: "Exclamation mark", GHS08: "Health hazard", GHS09: "Environment"
+  };
   if (ghsIds.length > 0) {
     if (y > 270) { pdf.addPage(); y = 15; }
     pdf.setFontSize(11);
@@ -153,23 +158,14 @@ async function exportSdsPDF(result, containerRef) {
     pdf.setTextColor(0);
     pdf.text("GHS Pictograms", margin, y);
     y += 6;
-    try {
-      const ghsEl = containerRef.current?.querySelector(".ghs-pictogram-row");
-      if (ghsEl) {
-        const ghsCanvas = await html2canvas(ghsEl, { backgroundColor: "#ffffff", scale: 2 });
-        const ghsImg = ghsCanvas.toDataURL("image/png");
-        const ghsW = Math.min(w - margin * 2, 140);
-        const ghsH = (ghsCanvas.height / ghsCanvas.width) * ghsW;
-        if (y + ghsH > 270) { pdf.addPage(); y = 15; }
-        pdf.addImage(ghsImg, "PNG", margin, y, ghsW, ghsH);
-        y += ghsH + 4;
-      }
-    } catch (e) {
-      pdf.setFontSize(9);
-      pdf.setFont(undefined, "normal");
-      pdf.text(ghsIds.join(", "), margin + 2, y);
-      y += 6;
-    }
+    pdf.setFontSize(9);
+    pdf.setFont(undefined, "normal");
+    ghsIds.forEach((id) => {
+      const desc = ghsNames[id] || "";
+      pdf.text(`${id} — ${desc}`, margin + 2, y);
+      y += 5;
+    });
+    y += 2;
   }
 
   // Radar chart

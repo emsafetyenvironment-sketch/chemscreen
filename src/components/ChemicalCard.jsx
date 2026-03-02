@@ -42,23 +42,32 @@ async function exportPDF(chemical, cardRef) {
   pdf.text(`Overall SSbD Score: ${chemical.overall}/5`, margin, y);
   y += 10;
 
-  // Category scores
-  pdf.setFontSize(11);
-  pdf.text("Category Scores", margin, y);
-  y += 6;
-  pdf.setFontSize(9);
-  pdf.setFont(undefined, "normal");
-  const pdfIconMap = {
-    acuteTox: "[ACUTE]", chronicCMR: "[CMR]", aquaticTox: "[AQUATIC]",
-    persistence: "[PERSIST]", bioaccumulation: "[BIOACC]",
-    physicalHaz: "[PHYSICAL]", endocrine: "[ENDOCRINE]",
-  };
-  CATEGORIES.forEach(({ key, label }) => {
-    const s = chemical.scores[key];
-    pdf.text(`${pdfIconMap[key] || ""} ${label}: ${s}/5`, margin + 2, y);
-    y += 5;
-  });
-  y += 4;
+  // Category scores as image
+  try {
+    const catEl = cardRef.current?.querySelector(".category-scores-section");
+    if (catEl) {
+      const catCanvas = await html2canvas(catEl, { backgroundColor: "#1e293b", scale: 2 });
+      const catImg = catCanvas.toDataURL("image/png");
+      const catW = Math.min(w - margin * 2, 160);
+      const catH = (catCanvas.height / catCanvas.width) * catW;
+      if (y + catH > 270) { pdf.addPage(); y = 15; }
+      pdf.addImage(catImg, "PNG", margin, y, catW, catH);
+      y += catH + 4;
+    }
+  } catch (e) {
+    // fallback to text
+    pdf.setFontSize(11);
+    pdf.text("Category Scores", margin, y);
+    y += 6;
+    pdf.setFontSize(9);
+    pdf.setFont(undefined, "normal");
+    CATEGORIES.forEach(({ key, label }) => {
+      const s = chemical.scores[key];
+      pdf.text(`${label}: ${s}/5`, margin + 2, y);
+      y += 5;
+    });
+    y += 4;
+  }
 
   // H-phrases
   pdf.setFontSize(11);
@@ -95,7 +104,17 @@ async function exportPDF(chemical, cardRef) {
         const ghsH = (ghsCanvas.height / ghsCanvas.width) * ghsW;
         if (y + ghsH > 270) { pdf.addPage(); y = 15; }
         pdf.addImage(ghsImg, "PNG", margin, y, ghsW, ghsH);
-        y += ghsH + 4;
+        y += ghsH + 2;
+        // GHS code labels under pictograms
+        pdf.setFontSize(8);
+        pdf.setFont(undefined, "normal");
+        pdf.setTextColor(0);
+        const picSpacing = ghsW / ghsIds.length;
+        ghsIds.forEach((id, i) => {
+          const labelW = pdf.getTextWidth(id);
+          pdf.text(id, margin + i * picSpacing + (picSpacing - labelW) / 2, y + 3);
+        });
+        y += 8;
       }
     } catch (e) {
       // fallback to text
@@ -242,7 +261,7 @@ export default function ChemicalCard({ chemical }) {
       {/* Scores grid + radar */}
       <div className="mt-4 grid grid-cols-1 lg:grid-cols-2 gap-4">
         {/* Category scores */}
-        <div className="bg-navy-800 border border-navy-600 rounded-2xl p-5">
+        <div className="bg-navy-800 border border-navy-600 rounded-2xl p-5 category-scores-section">
           <h3 className="text-sm font-semibold text-navy-200 mb-3 uppercase tracking-wider">SSbD Category Scores</h3>
           <div className="space-y-2">
             {CATEGORIES.map(({ key, label, icon }) => {

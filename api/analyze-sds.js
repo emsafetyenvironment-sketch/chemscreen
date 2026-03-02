@@ -47,7 +47,7 @@ IMPORTANT RULES:
 - If molecular weight is not found, use 0
 - Return ONLY valid JSON, no markdown, no explanation`;
 
-    const models = ['gemini-2.5-flash', 'gemini-2.0-flash'];
+    const models = ['gemini-2.5-flash', 'gemini-2.5-flash-lite'];
     let lastError = null;
 
     for (const model of models) {
@@ -73,6 +73,7 @@ IMPORTANT RULES:
         if (!response.ok) {
           const errText = await response.text();
           lastError = `${model}: ${response.status} ${errText}`;
+          console.error(`Model ${model} failed:`, response.status, errText);
           continue;
         }
 

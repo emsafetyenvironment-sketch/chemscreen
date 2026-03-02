@@ -10,6 +10,28 @@ function fixSubscripts(str) {
   return str.replace(/[₀₁₂₃₄₅₆₇₈₉]/g, ch => map[ch] || ch);
 }
 
+async function renderSvgToDataUrl(svgEl, size = 100) {
+  const svgStr = new XMLSerializer().serializeToString(svgEl);
+  const blob = new Blob([svgStr], { type: 'image/svg+xml;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const img = new Image();
+  img.width = size;
+  img.height = size;
+  return new Promise((resolve) => {
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      canvas.width = size;
+      canvas.height = size;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0, size, size);
+      URL.revokeObjectURL(url);
+      resolve(canvas.toDataURL('image/png'));
+    };
+    img.onerror = () => { URL.revokeObjectURL(url); resolve(null); };
+    img.src = url;
+  });
+}
+
 async function exportSdsPDF(result, containerRef) {
   const [{ default: jsPDF }, { default: html2canvas }] = await Promise.all([
     import("jspdf"),
@@ -144,28 +166,36 @@ async function exportSdsPDF(result, containerRef) {
     y += 4;
   }
 
-  // GHS pictograms as text with descriptions
+  // GHS pictograms as images
   const ghsIds = getGHSPictograms(result.hPhrases);
-  const ghsNames = {
-    GHS01: "Exploding bomb", GHS02: "Flame", GHS03: "Oxidizer",
-    GHS04: "Gas cylinder", GHS05: "Corrosion", GHS06: "Skull and crossbones",
-    GHS07: "Exclamation mark", GHS08: "Health hazard", GHS09: "Environment"
-  };
   if (ghsIds.length > 0) {
-    if (y > 270) { pdf.addPage(); y = 15; }
+    if (y > 240) { pdf.addPage(); y = 15; }
     pdf.setFontSize(11);
     pdf.setFont(undefined, "bold");
     pdf.setTextColor(0);
     pdf.text("GHS Pictograms", margin, y);
-    y += 6;
-    pdf.setFontSize(9);
-    pdf.setFont(undefined, "normal");
-    ghsIds.forEach((id) => {
-      const desc = ghsNames[id] || "";
-      pdf.text(`${id} — ${desc}`, margin + 2, y);
-      y += 5;
+    y += 4;
+    const pictoSize = 15; // mm
+    const pictoGap = 3;   // mm
+    const svgEls = containerRef.current?.querySelectorAll(".ghs-pictogram-row svg") || [];
+    const dataUrls = await Promise.all(
+      Array.from(svgEls).map((svg) => renderSvgToDataUrl(svg, 100))
+    );
+    let px = margin;
+    if (y + pictoSize + 6 > 270) { pdf.addPage(); y = 15; }
+    dataUrls.forEach((dataUrl, i) => {
+      if (dataUrl) {
+        pdf.addImage(dataUrl, "PNG", px, y, pictoSize, pictoSize);
+      }
+      // label underneath
+      pdf.setFontSize(6);
+      pdf.setFont(undefined, "normal");
+      const label = ghsIds[i] || "";
+      const labelW = pdf.getTextWidth(label);
+      pdf.text(label, px + (pictoSize - labelW) / 2, y + pictoSize + 3);
+      px += pictoSize + pictoGap;
     });
-    y += 2;
+    y += pictoSize + 8;
   }
 
   // Radar chart

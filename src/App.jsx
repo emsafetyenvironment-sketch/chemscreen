@@ -36,6 +36,14 @@ export default function App() {
 
   useEffect(() => { saveBank(bank); }, [bank]);
 
+  // Deep link: auto-search from URL param on load
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const q = params.get("q");
+    if (q) handleSearch(q);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   function handleSearch(query) {
     setError("");
     const chem = lookupChemical(query);
@@ -48,6 +56,10 @@ export default function App() {
     const result = { ...chem, scores, overall, searchedAt: new Date().toISOString() };
     setSelected(result);
     setCompareMode(false);
+    // Update URL with deep link
+    const url = new URL(window.location);
+    url.searchParams.set("q", query.trim());
+    window.history.replaceState({}, "", url);
     // Add to bank if not already there
     setBank((prev) => {
       if (prev.some((b) => b.cas === chem.cas)) return prev;
@@ -197,6 +209,9 @@ export default function App() {
             {/* Disclaimer */}
             <div className="mt-12 text-center text-[11px] text-navy-500 border-t border-navy-800 pt-4">
               Prototype — for demonstration purposes. Verify results against official sources (ECHA, REACH).
+              <div className="mt-2 text-xs text-navy-400">
+                ChemScreen — Built by EM Safety &amp; Environment | Erik Mattsson — EHS Consulting &amp; Digital Tools | <a href="mailto:em.safety.environment@gmail.com" className="underline hover:text-cyan-400">em.safety.environment@gmail.com</a>
+              </div>
             </div>
           </div>
         </main>

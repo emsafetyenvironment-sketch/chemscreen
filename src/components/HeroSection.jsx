@@ -100,6 +100,11 @@ export default function HeroSection() {
           )}
         </div>
 
+        {/* Branding */}
+        <div className="text-center text-xs text-navy-400 mb-4">
+          ChemScreen — Built by EM Safety &amp; Environment | Erik Mattsson — EHS Consulting &amp; Digital Tools | <a href="mailto:em.safety.environment@gmail.com" className="underline hover:text-cyan-400">em.safety.environment@gmail.com</a>
+        </div>
+
         {/* CTA */}
         <div className="text-center">
           <button

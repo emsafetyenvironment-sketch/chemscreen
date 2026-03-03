@@ -114,7 +114,7 @@ export default function HeroSection() {
           {creatorOpen && (
             <div className="mt-3 p-4 bg-navy-800/40 rounded-xl border border-navy-700/30 text-xs text-navy-300 leading-relaxed space-y-3">
               <p>
-                Erik Mattsson — EHS consultant and auditor with 15+ years of experience helping companies navigate safety, environmental and occupational health requirements — from medtech to manufacturing. Contracted auditor at RISE (ISO 9001, 14001, 45001). Building AI-powered tools for EHS professionals.
+                Erik Mattsson — EHS consultant with 15+ years of experience helping companies navigate safety, environmental and occupational health requirements — from medtech to manufacturing. Building AI-powered tools for EHS professionals.
               </p>
               <p className="flex gap-3">
                 <a href="https://www.linkedin.com/in/erik-mattsson-ehs/" target="_blank" rel="noopener noreferrer" className="underline hover:text-cyan-400">LinkedIn</a>

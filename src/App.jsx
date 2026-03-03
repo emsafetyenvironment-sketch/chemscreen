@@ -91,13 +91,22 @@ export default function App() {
       {/* Header */}
       <header className="bg-navy-900 border-b border-navy-700 sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
-          <div className="flex items-center gap-3">
+          <button
+            onClick={() => {
+              setSelected(null);
+              window.history.replaceState({}, '', window.location.pathname);
+              sessionStorage.removeItem("hero_dismissed");
+              setMobileMenu(false);
+            }}
+            className="flex items-center gap-3 cursor-pointer"
+          >
             <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-cyan-400 to-blue-500 flex items-center justify-center font-bold text-sm">CS</div>
-            <div>
+            <div className="text-left">
               <h1 className="text-lg font-bold leading-tight tracking-tight">ChemScreen</h1>
               <p className="text-[11px] text-navy-300 leading-tight">SSbD Chemical Screening Tool</p>
             </div>
-          </div>
+            <span className="text-[10px] px-1.5 py-0.5 bg-amber-500/20 text-amber-400 border border-amber-500/30 rounded-full font-medium uppercase tracking-wider">Prototype</span>
+          </button>
           <div className="hidden md:flex items-center gap-1">
             <button
               onClick={() => setActiveTab("search")}

@@ -7,6 +7,7 @@ import ChemicalBank from "./components/ChemicalBank";
 import CompareView from "./components/CompareView";
 import SdsUpload from "./components/SdsUpload";
 import HeroSection from "./components/HeroSection";
+import ContactForm from "./components/ContactForm";
 
 function lookupChemical(query) {
   const q = query.trim().toLowerCase();
@@ -215,11 +216,13 @@ export default function App() {
             </>
             )}
 
+            <ContactForm />
+
             {/* Disclaimer */}
             <div className="mt-12 text-center text-[11px] text-navy-500 border-t border-navy-800 pt-4">
               Prototype — for demonstration purposes. Verify results against official sources (ECHA, REACH).
               <div className="mt-2 text-xs text-navy-400">
-                ChemScreen — Built by EM Safety &amp; Environment | Erik Mattsson — EHS Consulting &amp; Digital Tools | <a href="mailto:em.safety.environment@gmail.com" className="underline hover:text-cyan-400">✉ Contact</a>
+                ChemScreen — Built by EM Safety &amp; Environment | Erik Mattsson — EHS Consulting &amp; Digital Tools | <a href="#contact" className="underline hover:text-cyan-400">✉ Contact</a>
               </div>
             </div>
           </div>

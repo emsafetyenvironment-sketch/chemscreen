@@ -135,7 +135,7 @@ export default function App() {
       <HeroSection />
       <div className="max-w-7xl mx-auto flex flex-col md:flex-row gap-0">
         {/* Sidebar */}
-        <aside className={`${mobileMenu ? 'block' : 'hidden'} md:block w-full md:w-72 lg:w-80 bg-navy-900 border-r border-navy-700 md:min-h-[calc(100vh-56px)] p-4 shrink-0`}>
+        <aside className={`${mobileMenu ? 'fixed inset-0 top-[56px] z-40 overflow-y-auto' : 'hidden'} md:relative md:block w-full md:w-72 lg:w-80 bg-navy-900 border-r border-navy-700 md:min-h-[calc(100vh-56px)] p-4 shrink-0`}>
           <ChemicalBank
             bank={bank}
             selected={selected}
@@ -219,7 +219,7 @@ export default function App() {
             <div className="mt-12 text-center text-[11px] text-navy-500 border-t border-navy-800 pt-4">
               Prototype — for demonstration purposes. Verify results against official sources (ECHA, REACH).
               <div className="mt-2 text-xs text-navy-400">
-                ChemScreen — Built by EM Safety &amp; Environment | Erik Mattsson — EHS Consulting &amp; Digital Tools | <a href="mailto:em.safety.environment@gmail.com" className="underline hover:text-cyan-400">em.safety.environment@gmail.com</a>
+                ChemScreen — Built by EM Safety &amp; Environment | Erik Mattsson — EHS Consulting &amp; Digital Tools | <a href="mailto:em.safety.environment@gmail.com" className="underline hover:text-cyan-400">✉ Contact</a>
               </div>
             </div>
           </div>

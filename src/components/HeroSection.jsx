@@ -118,7 +118,7 @@ export default function HeroSection() {
               </p>
               <p className="flex gap-3">
                 <a href="https://www.linkedin.com/in/erik-mattsson-ehs/" target="_blank" rel="noopener noreferrer" className="underline hover:text-cyan-400">LinkedIn</a>
-                <a href="mailto:em.safety.environment@gmail.com" className="underline hover:text-cyan-400">em.safety.environment@gmail.com</a>
+                <a href="mailto:em.safety.environment@gmail.com" className="underline hover:text-cyan-400">✉ Email</a>
               </p>
             </div>
           )}
@@ -131,7 +131,7 @@ export default function HeroSection() {
 
         {/* Branding */}
         <div className="text-center text-xs text-navy-400 mb-4">
-          ChemScreen — Built by EM Safety &amp; Environment | Erik Mattsson — EHS Consulting &amp; Digital Tools | <a href="mailto:em.safety.environment@gmail.com" className="underline hover:text-cyan-400">em.safety.environment@gmail.com</a>
+          ChemScreen — Built by EM Safety &amp; Environment | Erik Mattsson — EHS Consulting &amp; Digital Tools | <a href="mailto:em.safety.environment@gmail.com" className="underline hover:text-cyan-400">✉ Contact</a>
         </div>
 
         {/* CTA */}

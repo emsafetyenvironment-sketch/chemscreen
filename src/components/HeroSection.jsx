@@ -2,6 +2,7 @@ import { useState } from "react";
 
 export default function HeroSection() {
   const [aboutOpen, setAboutOpen] = useState(false);
+  const [creatorOpen, setCreatorOpen] = useState(false);
   const [dismissed, setDismissed] = useState(() => {
     try { return sessionStorage.getItem("hero_dismissed") === "1"; } catch { return false; }
   });
@@ -98,6 +99,34 @@ export default function HeroSection() {
               </p>
             </div>
           )}
+        </div>
+
+        {/* About the Creator toggle */}
+        <div className="mb-4">
+          <button
+            onClick={() => setCreatorOpen(!creatorOpen)}
+            className="text-xs text-navy-400 hover:text-cyan-400 transition-colors flex items-center gap-1"
+          >
+            <span>👤</span>
+            <span>About the Creator</span>
+            <span className={`transition-transform ${creatorOpen ? "rotate-180" : ""}`}>▾</span>
+          </button>
+          {creatorOpen && (
+            <div className="mt-3 p-4 bg-navy-800/40 rounded-xl border border-navy-700/30 text-xs text-navy-300 leading-relaxed space-y-3">
+              <p>
+                Erik Mattsson — EHS consultant and auditor with 15+ years of experience helping companies navigate safety, environmental and occupational health requirements — from medtech to manufacturing. Contracted auditor at RISE (ISO 9001, 14001, 45001). Building AI-powered tools for EHS professionals.
+              </p>
+              <p className="flex gap-3">
+                <a href="https://www.linkedin.com/in/erik-mattsson-ehs/" target="_blank" rel="noopener noreferrer" className="underline hover:text-cyan-400">LinkedIn</a>
+                <a href="mailto:em.safety.environment@gmail.com" className="underline hover:text-cyan-400">em.safety.environment@gmail.com</a>
+              </p>
+            </div>
+          )}
+        </div>
+
+        {/* Cross-link */}
+        <div className="mb-4 text-xs text-navy-400">
+          Also by EM Safety &amp; Environment — <a href="https://gembascan.com" target="_blank" rel="noopener noreferrer" className="underline hover:text-cyan-400">GembaScan → AI-powered workplace risk assessment</a>
         </div>
 
         {/* Branding */}

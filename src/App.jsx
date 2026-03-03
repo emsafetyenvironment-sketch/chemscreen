@@ -111,6 +111,7 @@ export default function App() {
         </div>
       </header>
 
+      <HeroSection />
       <div className="max-w-7xl mx-auto flex flex-col md:flex-row gap-0">
         {/* Sidebar */}
         <aside className={`${mobileMenu ? 'block' : 'hidden'} md:block w-full md:w-72 lg:w-80 bg-navy-900 border-r border-navy-700 md:min-h-[calc(100vh-56px)] p-4 shrink-0`}>
@@ -128,7 +129,6 @@ export default function App() {
 
         {/* Main */}
         <main className="flex-1 p-4 md:p-6 lg:p-8 min-h-[calc(100vh-56px)]">
-          <HeroSection />
           <div id="search-area" className="max-w-3xl mx-auto">
             {/* Mobile tabs */}
             <div className="flex md:hidden gap-2 mb-4">

@@ -6,6 +6,7 @@ import ChemicalCard from "./components/ChemicalCard";
 import ChemicalBank from "./components/ChemicalBank";
 import CompareView from "./components/CompareView";
 import SdsUpload from "./components/SdsUpload";
+import HeroSection from "./components/HeroSection";
 
 function lookupChemical(query) {
   const q = query.trim().toLowerCase();
@@ -127,7 +128,8 @@ export default function App() {
 
         {/* Main */}
         <main className="flex-1 p-4 md:p-6 lg:p-8 min-h-[calc(100vh-56px)]">
-          <div className="max-w-3xl mx-auto">
+          <HeroSection />
+          <div id="search-area" className="max-w-3xl mx-auto">
             {/* Mobile tabs */}
             <div className="flex md:hidden gap-2 mb-4">
               <button
